@@ -127,16 +127,23 @@ def expand_prompt_with_ai(short_prompt, api_key):
 
 def get_image_bytes(url):
     """
-    Downloads image to memory.
-    Increased timeout to 60s to fix server timeout errors.
+    Downloads image with RETRY logic.
+    If it fails, it waits 2 seconds and tries again (max 3 times).
     """
-    try:
-        response = requests.get(url, timeout=60) 
-        if response.status_code == 200:
-            return response.content
-        return None
-    except:
-        return None
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # Attempt download with 100s timeout
+            response = requests.get(url, timeout=100) 
+            if response.status_code == 200:
+                return response.content
+        except requests.exceptions.RequestException:
+            pass # Just continue to next attempt
+        
+        # Wait before retrying (backoff)
+        time.sleep(2)
+    
+    return None
 
 def upload_to_pollinations(uploaded_file):
     try:
@@ -173,12 +180,11 @@ with tab1:
         
     with c2:
         ratio = st.selectbox("Ratio", ["Square (1:1)", "Portrait (9:16)", "Landscape (16:9)"])
-        # === 2K RESOLUTION SETTINGS (Stable) ===
-        # Square: 1280x1280 (High Detail)
-        # Portrait/Landscape: 1080x1920 (Standard HD/2K)
-        if "Square" in ratio: width, height = 1280, 1280
-        elif "Portrait" in ratio: width, height = 1080, 1920
-        elif "Landscape" in ratio: width, height = 1920, 1080
+        # === STABLE HD SETTINGS ===
+        # These are "Safe HD" resolutions that don't crash the server
+        if "Square" in ratio: width, height = 1024, 1024
+        elif "Portrait" in ratio: width, height = 768, 1280
+        elif "Landscape" in ratio: width, height = 1280, 768
         
     with c3:
         style = st.selectbox("Style", ["Realistic", "Anime", "3D Render", "Cyberpunk", "Oil Painting", "None"])
@@ -193,11 +199,11 @@ with tab1:
                 st.session_state.create_prompt = expand_prompt_with_ai(st.session_state.create_prompt, groq_key)
                 st.rerun()
 
-    if st.button("🚀 IGNITE (GENERATE 2K)", type="primary", use_container_width=True):
+    if st.button("🚀 IGNITE (GENERATE)", type="primary", use_container_width=True):
         if st.session_state.create_prompt:
             # 1. BUILD PROMPT
             final_prompt = st.session_state.create_prompt
-            # Keeping "8k" in prompt for detail, but limiting pixel size for stability
+            # We keep '8k' in the prompt text for detail, even if actual pixel count is Safe HD
             final_prompt += ", 8k resolution, highly detailed, masterpiece"
             if style != "None":
                 final_prompt += f", {style} style"
@@ -206,8 +212,8 @@ with tab1:
             image_url = f"https://image.pollinations.ai/prompt/{final_prompt}?width={width}&height={height}&seed={seed}&nologo=true&model={model_api}"
             
             # 2. FETCH & DISPLAY
-            with st.status("🎨 Rendering 2K Image...", expanded=True) as status:
-                st.write("✨ contacting render engine...")
+            with st.status("🎨 Rendering High-Res Image...", expanded=True) as status:
+                st.write("✨ Contacting render engine (Attempt 1)...")
                 img_data = get_image_bytes(image_url)
                 
                 if img_data:
@@ -216,15 +222,15 @@ with tab1:
                     
                     # 3. DOWNLOAD BUTTON
                     st.download_button(
-                        label="⬇️ DOWNLOAD 2K IMAGE",
+                        label="⬇️ DOWNLOAD IMAGE",
                         data=img_data,
                         file_name=f"akriti_{seed}.jpg",
                         mime="image/jpeg",
                         use_container_width=True
                     )
                 else:
-                    status.update(label="❌ Error", state="error")
-                    st.error("Server Timeout. Please try again or switch to 'Turbo' model.")
+                    status.update(label="❌ Server Busy", state="error")
+                    st.error("Server is under heavy load. Please wait 10 seconds and try again, or switch to 'Turbo'.")
 
 # --- TAB 2: REMIX ---
 with tab2:
@@ -246,10 +252,10 @@ with tab2:
                     base_url = upload_to_pollinations(uploaded)
                     
                     if base_url:
-                        st.write("🎨 Applying 2K Transformation...")
+                        st.write("🎨 Applying Transformation...")
                         seed = random.randint(0, 99999)
-                        # Remix fixed to HD for stability
-                        remix_url = f"https://image.pollinations.ai/prompt/{st.session_state.remix_prompt}?image={base_url}&seed={seed}&nologo=true&model=flux&width=1920&height=1080"
+                        # Remix safe resolution
+                        remix_url = f"https://image.pollinations.ai/prompt/{st.session_state.remix_prompt}?image={base_url}&seed={seed}&nologo=true&model=flux&width=1280&height=768"
                         
                         img_data = get_image_bytes(remix_url)
                         
@@ -258,7 +264,7 @@ with tab2:
                             st.image(img_data, caption="Remixed Result", use_container_width=True)
                             st.download_button("⬇️ DOWNLOAD REMIX", data=img_data, file_name=f"remix_{seed}.jpg", mime="image/jpeg", use_container_width=True)
                         else:
-                            st.error("Remix failed during generation.")
+                            st.error("Remix failed. Server busy.")
                     else:
                         st.error("Upload failed.")
 
