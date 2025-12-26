@@ -1,14 +1,13 @@
 import streamlit as st
 import random
 import requests
-import time
 from groq import Groq
 
 # ==========================================
 # 1. CONFIGURATION & THEME ENGINE
 # ==========================================
 st.set_page_config(
-    page_title="AKRITI ",
+    page_title="AKRITI OMEGA",
     page_icon="👑",
     layout="wide"
 )
@@ -27,26 +26,57 @@ st.markdown("""
         background: linear-gradient(180deg, #020024 0%, #090979 35%, #00d4ff 100%);
         background-attachment: fixed;
     }
+    
+    /* PREVENT FOOTER OVERLAP */
+    .main .block-container {
+        padding-bottom: 80px; /* Space for the fixed footer */
+    }
 
     /* =========================================
-       3. CRITICAL VISIBILITY FIXES
+       3. CRITICAL VISIBILITY FIXES (The "White" Stuff)
        ========================================= */
     
-    /* FIX 1: THE EXPANDER (Settings Box) - Removed White Background */
+    /* FIX 1: THE EXPANDER (Settings Bar) */
+    /* Forces the details and summary elements to be dark/transparent */
     div[data-testid="stExpander"] {
-        background-color: rgba(0, 0, 0, 0.5) !important; /* Dark transparent background */
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 10px;
-        color: white !important;
+        overflow: hidden; /* Clips the corners */
+    }
+    div[data-testid="stExpander"] details {
+        background-color: transparent !important;
     }
     div[data-testid="stExpander"] summary {
-        color: white !important; /* Ensures the arrow and title are white */
+        background-color: transparent !important; 
+        color: white !important;
     }
     div[data-testid="stExpander"] svg {
-        fill: white !important; /* Makes the arrow icon white */
+        fill: white !important;
+    }
+    /* This targets the internal content box of the expander to ensure it's not white */
+    div[data-testid="stExpander"] > div[role="group"] {
+        background-color: transparent !important;
     }
 
-    /* FIX 2: THE MAGIC EXPAND BUTTON (Sparkle Icon) */
+    /* FIX 2: FILE UPLOADER (The "Browse" Button) */
+    [data-testid="stFileUploader"] {
+        background-color: rgba(0, 0, 0, 0.3);
+        border: 1px dashed #00d4ff;
+        border-radius: 15px;
+        padding: 20px;
+    }
+    /* This targets the small white button inside the uploader */
+    [data-testid="stFileUploader"] button {
+        background-color: rgba(255, 255, 255, 0.1) !important; /* Glassy look */
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+    [data-testid="stFileUploader"] small {
+        color: #e0e0e0 !important;
+    }
+
+    /* FIX 3: MAGIC EXPAND BUTTON (Sparkle Icon) */
     div.stButton > button {
         background: linear-gradient(90deg, #FF0099, #493240) !important;
         border: 1px solid rgba(255,255,255,0.2) !important;
@@ -59,44 +89,21 @@ st.markdown("""
         transform: scale(1.02);
         box-shadow: 0 0 15px #FF0099;
     }
-    div.stButton > button:active {
-        background: #FF0099 !important;
-    }
 
-    /* FIX 3: FILE UPLOADER (The Box in Remix Tab) */
-    [data-testid="stFileUploader"] {
-        background-color: rgba(0, 0, 0, 0.3); /* Darker background */
-        border: 1px dashed #00d4ff;
-        border-radius: 15px;
-        padding: 20px;
-    }
-    [data-testid="stFileUploader"] section {
-        background-color: transparent !important; /* Removes internal white blocks */
-    }
-    [data-testid="stFileUploader"] small {
-        color: #e0e0e0 !important;
-        display: block; /* Ensures visibility */
-    }
-
-    /* FIX 4: INPUT FIELDS (Text & Placeholders) */
+    /* FIX 4: INPUT FIELDS */
     .stTextInput > div > div > input {
-        background-color: rgba(0, 0, 0, 0.6) !important; /* Dark Glass */
-        color: #ffffff !important; /* White Text */
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
-    /* The placeholder text "e.g. Make me a cyborg" */
     input::placeholder {
-        color: #cccccc !important; /* Light Grey */
+        color: #cccccc !important;
         opacity: 1;
     }
 
-    /* FIX 5: DROPDOWN MENUS (The Popup List) */
+    /* FIX 5: DROPDOWN MENUS */
     div[data-baseweb="popover"], div[data-baseweb="menu"], ul {
-        background-color: #001f3f !important; /* Dark Blue Background */
-    }
-    li[role="option"] {
-        background-color: transparent !important;
-        color: white !important;
+        background-color: #001f3f !important;
     }
     li[role="option"]:hover {
         background-color: #00d4ff !important;
@@ -109,30 +116,26 @@ st.markdown("""
     }
 
     /* =========================================
-       4. THE "TRANSPARENT" PRO FOOTER
+       4. THE IMPROVED FOOTER
        ========================================= */
     .footer {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100%;
-        background: transparent; /* Totally Transparent */
-        color: rgba(255, 255, 255, 0.5); /* Faded white for elegance */
+        background: transparent; /* Totally transparent background */
+        color: white;
         text-align: center;
-        padding: 10px;
-        font-size: 12px;
-        font-weight: 300;
+        padding: 15px;
+        font-size: 13px;
         letter-spacing: 1px;
-        z-index: 999;
+        z-index: 9999;
         pointer-events: none;
+        /* High contrast shadow to make text visible on the light blue background */
+        text-shadow: 2px 2px 4px #000000, 0 0 10px #000000;
+        font-weight: 600;
     }
-    /* Explicitly target the text inside footer to prevent global overwrite */
-    .footer p {
-        color: rgba(255, 255, 255, 0.5) !important;
-        margin: 0;
-    }
-
-    /* HIDE JUNK */
+    
     #MainMenu, footer, header {visibility: hidden;}
     
 </style>
@@ -187,7 +190,7 @@ groq_key = get_groq_key()
 # ==========================================
 # 4. MAIN INTERFACE
 # ==========================================
-st.title(" AKRITI ")
+st.title("👑 AKRITI OMEGA")
 st.markdown("### The Ultimate Visual Engine")
 
 tab_create, tab_remix = st.tabs(["✨ CREATE", "🌪️ REMIX"])
@@ -269,7 +272,7 @@ with tab_remix:
                         data = fetch_image(url)
                         if data: st.download_button("⬇️ DOWNLOAD REMIX", data=data, file_name="remix.jpg", mime="image/jpeg")
 
-# THE INVISIBLE FOOTER (Transparent & Professional)
+# THE VISIBLE & PROFESSIONAL FOOTER
 st.markdown("""
 <div class="footer">
     <p>⚡ Powered by Samrion Intelligence | © 2026 Samrion AI Infrastructure | Founder: Nitin Raj</p>
