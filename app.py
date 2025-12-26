@@ -1,13 +1,14 @@
 import streamlit as st
 import random
 import time
-import requests # <--- NEW IMPORT FOR UPLOADING
+import requests
+from io import BytesIO
 
 # ==========================================
 # 1. CONFIGURATION & ROYAL BLUE THEME
 # ==========================================
 st.set_page_config(
-    page_title="AKRITI ULTIMATE",
+    page_title="AKRITI ",
     page_icon="🎨",
     layout="wide"
 )
@@ -25,7 +26,7 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    /* 3. GLASS INPUT BOXES & SELECTORS */
+    /* 3. GLASS INPUT BOXES */
     .stTextInput > div > div > input, .stNumberInput > div > div > input {
         background: rgba(0, 80, 158, 0.2) !important;
         backdrop-filter: blur(12px);
@@ -35,14 +36,7 @@ st.markdown("""
         padding: 12px;
     }
     
-    /* Fix for Dropdown Menu Text */
-    div[data-baseweb="select"] > div {
-        background-color: rgba(0, 80, 158, 0.2) !important;
-        color: white !important;
-        border-color: rgba(255, 255, 255, 0.2) !important;
-    }
-
-    /* 4. MAGIC BUTTONS (Gradient) */
+    /* 4. MAGIC BUTTONS */
     div.stButton > button {
         background: linear-gradient(90deg, #00c6ff, #0072ff);
         color: white;
@@ -56,6 +50,13 @@ st.markdown("""
     div.stButton > button:hover {
         transform: scale(1.02);
         box-shadow: 0 0 15px rgba(0, 114, 255, 0.6);
+    }
+    
+    /* DOWNLOAD BUTTON SPECIFIC */
+    div.stDownloadButton > button {
+        background: linear-gradient(90deg, #ff007f, #ff4081);
+        color: white;
+        border-radius: 30px;
     }
 
     /* 5. TAB STYLING */
@@ -75,12 +76,6 @@ st.markdown("""
         color: white !important;
     }
 
-    /* 6. SIDEBAR STYLING */
-    section[data-testid="stSidebar"] {
-        background-color: rgba(0, 31, 63, 0.9);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
     /* HIDE JUNK */
     #MainMenu, footer, header {visibility: hidden;}
     
@@ -88,21 +83,27 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. HELPER FUNCTION: UPLOAD IMAGE
+# 2. HELPER FUNCTIONS
 # ==========================================
 def upload_to_pollinations(uploaded_file):
-    """Hacks Pollinations upload endpoint to get a temporary public URL"""
+    """Hacks Pollinations upload endpoint"""
     try:
-        # Send POST request with file data
         files = {'file': uploaded_file.getvalue()}
         response = requests.post('https://image.pollinations.ai/upload', files=files)
         if response.status_code == 200:
-            # The response is the plain text URL
             return response.text.strip()
-        else:
-            return None
+        return None
     except Exception as e:
-        st.error(f"Upload Error: {e}")
+        return None
+
+def fetch_image_bytes(url):
+    """Downloads image to RAM for user download"""
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.content
+        return None
+    except:
         return None
 
 # ==========================================
@@ -129,31 +130,26 @@ with st.sidebar:
     st.info(f"Active: {selected_model.upper()}")
     st.markdown("---")
     
-    st.markdown("### 📏 Canvas Size (Create Mode)")
+    st.markdown("### 📏 Canvas Size")
     width = st.slider("Width (px)", 256, 2048, 1024, step=64)
     height = st.slider("Height (px)", 256, 2048, 1024, step=64)
     
     st.markdown("---")
-
     st.markdown("### 🧬 DNA (Seed)")
     use_random_seed = st.checkbox("Randomize DNA", value=True)
     seed_input = st.number_input("Custom Seed ID", value=42, disabled=use_random_seed)
-    
     final_seed = random.randint(0, 1000000) if use_random_seed else int(seed_input)
 
 # ==========================================
 # 4. MAIN INTERFACE
 # ==========================================
 
-st.title("AKRITI ULTIMATE")
+st.title("AKRITI FINAL")
 st.markdown("<div style='color: #aaccff; margin-bottom: 30px;'>IMAGINATION & REMIX ENGINE</div>", unsafe_allow_html=True)
 
-# TABS FOR DIFFERENT MODES
 tab_create, tab_remix = st.tabs(["✨ Create New", "🖼️ Remix Photo"])
 
-# ==========================
-# TAB 1: CREATE NEW (Original)
-# ==========================
+# === TAB 1: CREATE NEW ===
 with tab_create:
     col1, col2 = st.columns([3, 1])
     with col1:
@@ -165,7 +161,6 @@ with tab_create:
             extras = ", ".join(random.sample(modifiers, 2))
             if prompt_create:
                 st.info(f"Enhanced: {extras}")
-                # In a real app we'd update session state, here we just show info
             else:
                 st.warning("Type something first!")
 
@@ -174,16 +169,31 @@ with tab_create:
     if btn_create and prompt_create:
         with st.status(f"🎨 Rendering with {selected_model.upper()}...", expanded=True) as status:
             clean_prompt = prompt_create.replace(" ", "%20")
+            # 1. Generate URL
             image_url = f"https://image.pollinations.ai/prompt/{clean_prompt}?width={width}&height={height}&seed={final_seed}&nologo=true&model={selected_model}"
-            time.sleep(1) # Fake wait for effect
+            
+            # 2. Fetch Bytes (Real Download logic)
+            st.write("📥 Fetching high-quality data...")
+            img_data = fetch_image_bytes(image_url)
+            
             status.update(label="RENDER COMPLETE", state="complete", expanded=False)
 
-        st.image(image_url, caption=f"Seed: {final_seed}", use_container_width=True)
-        st.markdown(f"""<div style="text-align: center; margin-top: 20px;"><a href="{image_url}" download="akriti_{final_seed}.jpg" target="_blank"><button style="background: linear-gradient(45deg, #00c6ff, #0072ff); border: none; color: white; padding: 12px 24px; border-radius: 30px; cursor: pointer;">⬇️ DOWNLOAD HIGH QUALITY</button></a></div>""", unsafe_allow_html=True)
+        if img_data:
+            # 3. Show Preview
+            st.image(img_data, caption=f"Seed: {final_seed}", use_container_width=True)
+            
+            # 4. Real Download Button
+            st.download_button(
+                label="⬇️ DOWNLOAD IMAGE (HD)",
+                data=img_data,
+                file_name=f"akriti_{final_seed}.jpg",
+                mime="image/jpeg",
+                key="dl_create"
+            )
+        else:
+            st.error("Connection failed. Please try again.")
 
-# ==========================
-# TAB 2: REMIX PHOTO (New)
-# ==========================
+# === TAB 2: REMIX PHOTO ===
 with tab_remix:
     st.markdown("### 1. Upload Base Photo")
     uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"])
@@ -191,38 +201,37 @@ with tab_remix:
     if uploaded_file is not None:
         st.image(uploaded_file, caption="Original Photo", width=300)
         
-        st.markdown("---")
-        st.markdown("### 2. Describe the Edit")
-        prompt_remix = st.text_input("What should change? (e.g., 'Add a golden retriever next to me')", key="prompt_remix_box")
+        st.markdown("### 2. Describe Edit")
+        prompt_remix = st.text_input("What to change?", key="prompt_remix_box")
         
-        st.markdown("### 3. Transformation Strength")
-        strength = st.slider("How much change? (Lower = subtle, Higher = drastic)", 10, 90, 50)
-        st.caption("Tip: Use 30-50% to add objects. Use 70%+ to change art style.")
-
         btn_remix = st.button("🌪️ REMIX IMAGE", type="primary", key="btn_remix")
 
         if btn_remix and prompt_remix:
-            with st.status("🌪️ Uploading & Remixing...", expanded=True) as status:
-                # 1. Upload image to get temporary URL
-                st.write("📤 Sending photo to neural cloud...")
+            with st.status("🌪️ Processing Remix...", expanded=True) as status:
+                st.write("📤 Uploading base layer...")
                 base_image_url = upload_to_pollinations(uploaded_file)
                 
                 if base_image_url:
-                    st.write("✅ Photo accepted. Applying edits...")
-                    # 2. Construct URL with image reference
+                    st.write("🎨 Applying neural edits...")
                     clean_prompt = prompt_remix.replace(" ", "%20")
-                    # Strength needs to be inverted for Pollinations sometimes, let's try direct first.
-                    # Actually Pollinations doesn't have a direct strength parameter easily exposed in the URL for Flux yet.
-                    # We rely on the prompt guiding it.
-                    
-                    # IMPORTANT: When using an image, width/height are usually ignored as it adopts the original image aspect ratio.
                     remix_url = f"https://image.pollinations.ai/prompt/{clean_prompt}?image={base_image_url}&seed={final_seed}&nologo=true&model={selected_model}"
                     
-                    time.sleep(2) # Give API time to process upload reference
+                    # Fetch Bytes for Download
+                    st.write("📥 Finalizing pixels...")
+                    remix_data = fetch_image_bytes(remix_url)
+                    
                     status.update(label="REMIX COMPLETE", state="complete", expanded=False)
                     
-                    st.image(remix_url, caption=f"Remixed Seed: {final_seed}", use_container_width=True)
-                    st.markdown(f"""<div style="text-align: center; margin-top: 20px;"><a href="{remix_url}" download="akriti_remix_{final_seed}.jpg" target="_blank"><button style="background: linear-gradient(45deg, #00c6ff, #0072ff); border: none; color: white; padding: 12px 24px; border-radius: 30px; cursor: pointer;">⬇️ DOWNLOAD REMIX</button></a></div>""", unsafe_allow_html=True)
+                    if remix_data:
+                        st.image(remix_data, caption=f"Remixed Seed: {final_seed}", use_container_width=True)
+                        st.download_button(
+                            label="⬇️ DOWNLOAD REMIX",
+                            data=remix_data,
+                            file_name=f"akriti_remix_{final_seed}.jpg",
+                            mime="image/jpeg",
+                            key="dl_remix"
+                        )
+                    else:
+                        st.error("Failed to fetch final image.")
                 else:
-                    status.update(label="UPLOAD FAILED", state="error")
-                    st.error("Could not upload base image. Try a smaller file.")
+                    st.error("Upload failed.")
