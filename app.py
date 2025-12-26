@@ -8,7 +8,7 @@ from groq import Groq
 # 1. CONFIGURATION & THEME ENGINE
 # ==========================================
 st.set_page_config(
-    page_title="AKRITI OMEGA",
+    page_title="AKRITI ",
     page_icon="👑",
     layout="wide"
 )
@@ -17,7 +17,7 @@ st.set_page_config(
 st.markdown("""
 <style>
     /* 1. GLOBAL FONT & COLOR RESET */
-    .stApp, p, h1, h2, h3, h4, h5, label, span, div, small, li, button {
+    .stApp, p, h1, h2, h3, h4, h5, label, span, div, small, li, button, summary {
         font-family: 'Inter', sans-serif !important;
         color: #ffffff !important;
     }
@@ -32,8 +32,21 @@ st.markdown("""
        3. CRITICAL VISIBILITY FIXES
        ========================================= */
     
-    /* FIX 1: THE MAGIC EXPAND BUTTON (Sparkle Icon) */
-    /* Force ALL buttons to use the Neon Gradient, even secondary ones */
+    /* FIX 1: THE EXPANDER (Settings Box) - Removed White Background */
+    div[data-testid="stExpander"] {
+        background-color: rgba(0, 0, 0, 0.5) !important; /* Dark transparent background */
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 10px;
+        color: white !important;
+    }
+    div[data-testid="stExpander"] summary {
+        color: white !important; /* Ensures the arrow and title are white */
+    }
+    div[data-testid="stExpander"] svg {
+        fill: white !important; /* Makes the arrow icon white */
+    }
+
+    /* FIX 2: THE MAGIC EXPAND BUTTON (Sparkle Icon) */
     div.stButton > button {
         background: linear-gradient(90deg, #FF0099, #493240) !important;
         border: 1px solid rgba(255,255,255,0.2) !important;
@@ -50,18 +63,22 @@ st.markdown("""
         background: #FF0099 !important;
     }
 
-    /* FIX 2: FILE UPLOADER (The "Invisible" Box) */
+    /* FIX 3: FILE UPLOADER (The Box in Remix Tab) */
     [data-testid="stFileUploader"] {
-        background-color: rgba(0, 31, 63, 0.6);
+        background-color: rgba(0, 0, 0, 0.3); /* Darker background */
         border: 1px dashed #00d4ff;
         border-radius: 15px;
         padding: 20px;
     }
+    [data-testid="stFileUploader"] section {
+        background-color: transparent !important; /* Removes internal white blocks */
+    }
     [data-testid="stFileUploader"] small {
-        color: #e0e0e0 !important; /* Make "Limit 200MB" visible */
+        color: #e0e0e0 !important;
+        display: block; /* Ensures visibility */
     }
 
-    /* FIX 3: INPUT FIELDS (Text & Placeholders) */
+    /* FIX 4: INPUT FIELDS (Text & Placeholders) */
     .stTextInput > div > div > input {
         background-color: rgba(0, 0, 0, 0.6) !important; /* Dark Glass */
         color: #ffffff !important; /* White Text */
@@ -73,7 +90,7 @@ st.markdown("""
         opacity: 1;
     }
 
-    /* FIX 4: DROPDOWN MENUS (The Popup List) */
+    /* FIX 5: DROPDOWN MENUS (The Popup List) */
     div[data-baseweb="popover"], div[data-baseweb="menu"], ul {
         background-color: #001f3f !important; /* Dark Blue Background */
     }
@@ -81,12 +98,10 @@ st.markdown("""
         background-color: transparent !important;
         color: white !important;
     }
-    /* Highlight color when hovering an option */
     li[role="option"]:hover {
         background-color: #00d4ff !important;
         color: black !important;
     }
-    /* The box when closed */
     div[data-baseweb="select"] > div {
         background-color: rgba(0,0,0,0.4) !important;
         color: white !important;
@@ -102,15 +117,19 @@ st.markdown("""
         bottom: 0;
         width: 100%;
         background: transparent; /* Totally Transparent */
-        backdrop-filter: blur(5px); /* Subtle Glass Blur */
-        color: rgba(255, 255, 255, 0.6); /* Slightly faded white */
+        color: rgba(255, 255, 255, 0.5); /* Faded white for elegance */
         text-align: center;
         padding: 10px;
-        font-size: 11px;
+        font-size: 12px;
+        font-weight: 300;
         letter-spacing: 1px;
         z-index: 999;
         pointer-events: none;
-        text-shadow: 1px 1px 2px black; /* Shadow ensures readability on any color */
+    }
+    /* Explicitly target the text inside footer to prevent global overwrite */
+    .footer p {
+        color: rgba(255, 255, 255, 0.5) !important;
+        margin: 0;
     }
 
     /* HIDE JUNK */
@@ -168,7 +187,7 @@ groq_key = get_groq_key()
 # ==========================================
 # 4. MAIN INTERFACE
 # ==========================================
-st.title("👑 AKRITI OMEGA")
+st.title(" AKRITI ")
 st.markdown("### The Ultimate Visual Engine")
 
 tab_create, tab_remix = st.tabs(["✨ CREATE", "🌪️ REMIX"])
@@ -253,6 +272,6 @@ with tab_remix:
 # THE INVISIBLE FOOTER (Transparent & Professional)
 st.markdown("""
 <div class="footer">
-    <p>⚡ Powered by Samrion Intelligence | © 2025 Samrion Technologies | Founder: Nitin Raj</p>
+    <p>⚡ Powered by Samrion Intelligence | © 2026 Samrion AI Infrastructure | Founder: Nitin Raj</p>
 </div>
 """, unsafe_allow_html=True)
