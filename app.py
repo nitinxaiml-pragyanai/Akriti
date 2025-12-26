@@ -15,8 +15,8 @@ except ImportError as e:
 # 1. CONFIGURATION & THEME ENGINE
 # ==========================================
 st.set_page_config(
-    page_title="AKRITI ",
-    page_icon="👁",
+    page_title="AKRITI OMEGA",
+    page_icon="👑",
     layout="wide"
 )
 
@@ -127,11 +127,11 @@ def expand_prompt_with_ai(short_prompt, api_key):
 
 def get_image_bytes(url):
     """
-    Downloads the image data directly into memory so Streamlit can display it 
-    without relying on external URL loading in the browser.
+    Downloads image to memory.
+    Increased timeout to 60s to fix server timeout errors.
     """
     try:
-        response = requests.get(url, timeout=30) # 30s timeout for 8K
+        response = requests.get(url, timeout=60) 
         if response.status_code == 200:
             return response.content
         return None
@@ -156,7 +156,7 @@ if 'create_prompt' not in st.session_state: st.session_state.create_prompt = ""
 if 'remix_prompt' not in st.session_state: st.session_state.remix_prompt = ""
 groq_key = get_groq_key()
 
-st.title("👑 AKRITI ")
+st.title("👑 AKRITI OMEGA")
 st.caption("Samrion Intelligence Visual Engine")
 
 tab1, tab2 = st.tabs(["✨ GENERATE", "🌪️ REMIX"])
@@ -172,10 +172,11 @@ with tab1:
         model_api = "flux" if "Flux" in model_choice else "turbo"
         
     with c2:
-        # Increased resolution for 8K request
         ratio = st.selectbox("Ratio", ["Square (1:1)", "Portrait (9:16)", "Landscape (16:9)"])
-        # Using maximum safe resolution for Pollinations
-        if "Square" in ratio: width, height = 2048, 2048
+        # === 2K RESOLUTION SETTINGS (Stable) ===
+        # Square: 1280x1280 (High Detail)
+        # Portrait/Landscape: 1080x1920 (Standard HD/2K)
+        if "Square" in ratio: width, height = 1280, 1280
         elif "Portrait" in ratio: width, height = 1080, 1920
         elif "Landscape" in ratio: width, height = 1920, 1080
         
@@ -192,12 +193,12 @@ with tab1:
                 st.session_state.create_prompt = expand_prompt_with_ai(st.session_state.create_prompt, groq_key)
                 st.rerun()
 
-    if st.button("🚀 IGNITE (GENERATE 8K)", type="primary", use_container_width=True):
+    if st.button("🚀 IGNITE (GENERATE 2K)", type="primary", use_container_width=True):
         if st.session_state.create_prompt:
             # 1. BUILD PROMPT
             final_prompt = st.session_state.create_prompt
-            # Force high quality keywords
-            final_prompt += ", 8k resolution, masterpiece, highly detailed, ultra realistic"
+            # Keeping "8k" in prompt for detail, but limiting pixel size for stability
+            final_prompt += ", 8k resolution, highly detailed, masterpiece"
             if style != "None":
                 final_prompt += f", {style} style"
             
@@ -205,7 +206,7 @@ with tab1:
             image_url = f"https://image.pollinations.ai/prompt/{final_prompt}?width={width}&height={height}&seed={seed}&nologo=true&model={model_api}"
             
             # 2. FETCH & DISPLAY
-            with st.status("🎨 Rendering 8K Image...", expanded=True) as status:
+            with st.status("🎨 Rendering 2K Image...", expanded=True) as status:
                 st.write("✨ contacting render engine...")
                 img_data = get_image_bytes(image_url)
                 
@@ -213,9 +214,9 @@ with tab1:
                     status.update(label="✅ Complete!", state="complete", expanded=False)
                     st.image(img_data, caption=f"Generated Result (Seed: {seed})", use_container_width=True)
                     
-                    # 3. DOWNLOAD BUTTON (Only shows if image exists)
+                    # 3. DOWNLOAD BUTTON
                     st.download_button(
-                        label="⬇️ DOWNLOAD 8K IMAGE",
+                        label="⬇️ DOWNLOAD 2K IMAGE",
                         data=img_data,
                         file_name=f"akriti_{seed}.jpg",
                         mime="image/jpeg",
@@ -223,7 +224,7 @@ with tab1:
                     )
                 else:
                     status.update(label="❌ Error", state="error")
-                    st.error("Server Timeout: The image was too large or the server is busy. Try 'Turbo' model or slightly lower resolution.")
+                    st.error("Server Timeout. Please try again or switch to 'Turbo' model.")
 
 # --- TAB 2: REMIX ---
 with tab2:
@@ -245,8 +246,9 @@ with tab2:
                     base_url = upload_to_pollinations(uploaded)
                     
                     if base_url:
-                        st.write("🎨 Applying 8K Transformation...")
+                        st.write("🎨 Applying 2K Transformation...")
                         seed = random.randint(0, 99999)
+                        # Remix fixed to HD for stability
                         remix_url = f"https://image.pollinations.ai/prompt/{st.session_state.remix_prompt}?image={base_url}&seed={seed}&nologo=true&model=flux&width=1920&height=1080"
                         
                         img_data = get_image_bytes(remix_url)
