@@ -12,89 +12,108 @@ st.set_page_config(
     layout="wide"
 )
 
-# THE ROBUST CSS PATCH
+# THE FIX: CSS THAT FORCES DARK MODE ON COMPONENTS
 st.markdown("""
 <style>
-    /* 1. SAFER FONT RESET (Doesn't break icons) */
-    html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
-    }
-    
-    /* 2. BACKGROUND: DEEP SPACE */
+    /* 1. BACKGROUND */
     .stApp {
         background: linear-gradient(180deg, #020024 0%, #090979 35%, #00d4ff 100%);
         background-attachment: fixed;
     }
     
-    /* 3. TEXT COLOR FORCE (White) */
+    /* 2. TEXT COLOR (Force White) */
     h1, h2, h3, p, span, div, label {
         color: #ffffff !important;
     }
 
     /* =========================================
-       CRITICAL UI FIXES
+       FIXING THE "WHITE SHIT"
        ========================================= */
-       
-    /* FIX: PREVENT FOOTER OVERLAP */
-    /* Adds empty space at the bottom of the scrollable area */
-    .block-container {
-        padding-bottom: 120px !important;
-    }
 
-    /* FIX: THE EXPANDER (Settings Box) */
+    /* FIX 1: THE EXPANDER (Settings Bar) */
+    /* This fixes the solid white bar at the top of settings */
     div[data-testid="stExpander"] {
         background-color: rgba(0, 0, 0, 0.6) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 10px;
         color: white !important;
     }
-    /* Fixes the "keyboard_arrow_down" glitch by ignoring icon styling */
-    div[data-testid="stExpander"] summary span {
-        font-family: 'Inter', sans-serif !important;
+    div[data-testid="stExpander"] summary {
+        background-color: transparent !important; /* Removes white background */
+        color: white !important;
+    }
+    div[data-testid="stExpander"] summary:hover {
+        color: #00d4ff !important;
     }
     div[data-testid="stExpander"] svg {
-        fill: white !important; /* White Arrow */
+        fill: white !important; /* Fixes the arrow icon */
     }
 
-    /* FIX: FILE UPLOADER (The "Browse" Button) */
+    /* FIX 2: DROPDOWN MENUS (Selectbox) */
+    /* This fixes the white boxes for Model, Ratio, Style, etc. */
+    div[data-baseweb="select"] > div {
+        background-color: rgba(0, 0, 0, 0.6) !important; /* Dark background */
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+    /* Fixes the text inside the box */
+    div[data-baseweb="select"] span {
+        color: white !important; 
+    }
+    /* Fixes the dropdown icon (triangle) */
+    div[data-baseweb="select"] svg {
+        fill: white !important;
+    }
+    
+    /* The Menu List (When you click the dropdown) */
+    ul[data-testid="stSelectboxVirtualDropdown"] {
+        background-color: #001f3f !important;
+    }
+    li[role="option"] {
+        color: white !important;
+    }
+    li[role="option"]:hover {
+        background-color: #00d4ff !important;
+        color: black !important;
+    }
+
+    /* FIX 3: FILE UPLOADER (Browse Button) */
     [data-testid="stFileUploader"] {
         background-color: rgba(0, 0, 0, 0.3);
         border: 1px dashed #00d4ff;
         border-radius: 15px;
         padding: 20px;
     }
-    /* Target the internal white button specifically */
     [data-testid="stFileUploader"] button {
-        background-color: rgba(0, 0, 0, 0.5) !important; /* Dark background */
+        background-color: rgba(0, 0, 0, 0.5) !important;
         color: white !important;
-        border: 1px solid rgba(255,255,255,0.3) !important;
-    }
-    [data-testid="stFileUploader"] section {
-        background-color: transparent !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
     }
 
-    /* FIX: MAGIC EXPAND BUTTON */
+    /* FIX 4: INPUT FIELDS */
+    .stTextInput > div > div > input {
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    input::placeholder {
+        color: #cccccc !important;
+    }
+
+    /* FIX 5: BUTTONS */
     div.stButton > button {
         background: linear-gradient(90deg, #FF0099, #493240) !important;
         border: 1px solid rgba(255,255,255,0.2) !important;
         color: white !important;
         font-weight: bold !important;
     }
-    div.stButton > button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 0 15px #FF0099;
-    }
-
-    /* FIX: INPUT FIELDS */
-    .stTextInput > div > div > input {
-        background-color: rgba(0, 0, 0, 0.6) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
 
     /* =========================================
-       THE FOOTER
+       FOOTER
        ========================================= */
+    .block-container {
+        padding-bottom: 100px; /* Prevents overlap */
+    }
     .footer {
         position: fixed;
         left: 0;
@@ -106,13 +125,12 @@ st.markdown("""
         padding: 15px;
         font-size: 14px;
         z-index: 9999;
-        pointer-events: none; /* Allows clicking through if needed */
-        text-shadow: 2px 2px 5px black; /* Ensures visibility */
-        font-weight: 500;
+        pointer-events: none;
+        text-shadow: 2px 2px 5px black; /* Visible on any background */
+        font-family: sans-serif;
     }
     
     #MainMenu, footer, header {visibility: hidden;}
-    
 </style>
 """, unsafe_allow_html=True)
 
@@ -169,6 +187,7 @@ tab_create, tab_remix = st.tabs(["✨ CREATE", "🌪️ REMIX"])
 with tab_create:
     st.markdown("<br>", unsafe_allow_html=True)
     
+    # SETTINGS
     with st.expander("🎛️ SETTINGS (Model, Size, Style)", expanded=True):
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -183,6 +202,7 @@ with tab_create:
         with c3:
             style = st.selectbox("Style", ["None", "Cyberpunk", "Cinematic", "Oil Painting", "Pixar 3D", "Dark Fantasy"])
 
+    # PROMPT
     col_p, col_b = st.columns([4, 1])
     with col_p:
         st.session_state.create_prompt = st.text_input("Describe your vision...", value=st.session_state.create_prompt, key="c_input", placeholder="e.g. A golden temple in clouds")
