@@ -4,174 +4,172 @@ import requests
 import time
 
 # ==========================================
-# 1. CONFIGURATION & DARK THEME FIXES
+# 1. CONFIGURATION & OMEGA THEME
 # ==========================================
 st.set_page_config(
-    page_title="AKRITI SPEED",
-    page_icon="⚡",
+    page_title="AKRITI OMEGA",
+    page_icon="👑",
     layout="wide"
 )
 
+# THE LEGENDARY CSS (Fixed for Visibility)
 st.markdown("""
 <style>
-    /* 1. GLOBAL TEXT COLOR = WHITE */
-    .stApp, p, h1, h2, h3, h4, label, span, div {
+    /* GLOBAL TEXT VISIBILITY */
+    .stApp, p, h1, h2, h3, h4, h5, label, span, div {
         color: #ffffff !important;
+        font-family: 'Inter', sans-serif;
     }
 
-    /* 2. MAIN BACKGROUND (Royal Blue) */
+    /* BACKGROUND: DEEP SPACE IMPERIAL */
     .stApp {
-        background: linear-gradient(135deg, #001f3f 0%, #003366 50%, #00509e 100%);
+        background: linear-gradient(180deg, #020024 0%, #090979 35%, #00d4ff 100%);
         background-attachment: fixed;
     }
 
-    /* 3. SIDEBAR BACKGROUND (FIXED FOR WHITE MENU ISSUE) */
-    section[data-testid="stSidebar"] {
-        background-color: #001226 !important; /* Very Dark Blue */
-        border-right: 1px solid #4da6ff;
-    }
-    
-    /* Force Sidebar Text & Inputs to be Visible */
-    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {
-        color: #ffffff !important;
-    }
-    section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
-        background-color: rgba(255,255,255,0.1) !important;
-        color: white !important;
+    /* CONTROL DECK (The new Menu) */
+    div[data-testid="stExpander"] {
+        background-color: rgba(0, 0, 0, 0.6);
+        border: 1px solid #00d4ff;
+        border-radius: 15px;
     }
 
-    /* 4. INPUT BOXES (Glass Style) */
-    .stTextInput > div > div > input, .stNumberInput > div > div > input {
-        background: rgba(0, 80, 158, 0.3) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        color: #ffffff !important;
+    /* INPUTS */
+    .stTextInput > div > div > input {
+        background-color: rgba(255,255,255,0.1) !important;
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.2);
         border-radius: 10px;
     }
 
-    /* 5. BUTTONS */
+    /* BUTTONS */
     div.stButton > button {
-        background: linear-gradient(90deg, #00c6ff, #0072ff);
-        color: white;
+        background: linear-gradient(45deg, #FF0099, #493240);
         border: none;
-        padding: 0.6rem 1.2rem;
-        border-radius: 8px;
+        color: white;
         font-weight: bold;
+        transition: 0.3s;
     }
-    
-    /* 6. STATUS BOX COLOR FIX */
-    div[data-testid="stStatusWidget"] {
-        background-color: #001f3f !important;
-        border: 1px solid #4da6ff;
+    div.stButton > button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px #FF0099;
     }
 
-    /* HIDE JUNK */
-    #MainMenu, footer, header {visibility: hidden;}
+    /* HIDE STREAMLIT BRANDING */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
     
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. HELPER FUNCTIONS
+# 2. SESSION STATE (The Memory)
 # ==========================================
-def fetch_image_bytes(url):
-    """Downloads image in background without freezing app"""
+if 'history' not in st.session_state:
+    st.session_state.history = []
+
+# ==========================================
+# 3. HELPER FUNCTIONS
+# ==========================================
+def fetch_image(url):
     try:
-        response = requests.get(url, timeout=10) # 10s timeout to prevent hanging
-        if response.status_code == 200:
-            return response.content
-        return None
-    except:
-        return None
+        r = requests.get(url, timeout=5)
+        if r.status_code == 200: return r.content
+    except: return None
 
 # ==========================================
-# 3. SIDEBAR (THE COCKPIT)
+# 4. THE CONTROL DECK (Main Screen Menu)
 # ==========================================
-with st.sidebar:
-    st.title("⚙️ SETTINGS")
-    
-    # Model Selector
-    st.markdown("### 🧠 AI Model")
-    model_choice = st.selectbox(
-        "Choose Engine:",
-        ["Turbo (Fastest)", "Flux (Best Quality)", "Flux-Realism", "Flux-Anime", "Flux-3D"]
-    )
-    
-    model_map = {
-        "Turbo (Fastest)": "turbo",
-        "Flux (Best Quality)": "flux",
-        "Flux-Realism": "flux-realism",
-        "Flux-Anime": "flux-anime",
-        "Flux-3D": "flux-3d"
-    }
-    selected_model = model_map[model_choice]
-    
-    if selected_model == "turbo":
-        st.success("⚡ Speed: ~3 Seconds")
-    else:
-        st.warning("🐢 Speed: ~15-30 Seconds")
+st.title("👑 AKRITI OMEGA")
+st.markdown("### The World's Most Advanced Visual Engine")
 
-    st.markdown("---")
+# WE USE COLUMNS INSTEAD OF SIDEBAR so you can see it!
+st.markdown("---")
+with st.expander("🎛️ CONTROL CENTER (Open for Settings)", expanded=True):
+    c1, c2, c3 = st.columns(3)
     
-    # Size
-    width = st.slider("Width", 512, 2048, 1024, step=64)
-    height = st.slider("Height", 512, 2048, 1024, step=64)
-    
-    st.markdown("---")
-    # Seed
-    use_random = st.checkbox("Random Seed", value=True)
-    seed_input = st.number_input("Custom Seed", value=42, disabled=use_random)
-    final_seed = random.randint(0, 1000000) if use_random else int(seed_input)
+    with c1:
+        st.markdown("#### 🧠 AI Brain")
+        model = st.selectbox("", ["Flux (Best)", "Flux-Realism", "Flux-Anime", "Flux-3D", "Turbo (Fast)"], label_visibility="collapsed")
+        model_code = model.split(" ")[0].lower() # extracts 'flux', 'turbo' etc
+        
+    with c2:
+        st.markdown("#### 📐 Aspect Ratio")
+        ratio = st.selectbox("", ["Square (1:1)", "Portrait (9:16)", "Landscape (16:9)", "Wide (21:9)"], label_visibility="collapsed")
+        
+        # Smart Logic for Dimensions
+        if "Square" in ratio: w, h = 1024, 1024
+        elif "Portrait" in ratio: w, h = 768, 1344
+        elif "Landscape" in ratio: w, h = 1344, 768
+        elif "Wide" in ratio: w, h = 1536, 640
+
+    with c3:
+        st.markdown("#### 🎨 Style Preset")
+        style = st.selectbox("", ["None", "Cyberpunk", "Studio Photo", "Oil Painting", "Pixar 3D", "Dark Fantasy"], label_visibility="collapsed")
+
+st.markdown("---")
 
 # ==========================================
-# 4. MAIN SCREEN
+# 5. INPUT SECTOR
 # ==========================================
-st.title("AKRITI SPEED")
-st.markdown("### The Instant Imagination Engine")
+col_prompt, col_btn = st.columns([4, 1])
 
-# Input
-col1, col2 = st.columns([4, 1])
-with col1:
-    prompt = st.text_input("Describe your vision...", placeholder="e.g. Iron Man in Bihar")
-with col2:
+with col_prompt:
+    prompt_text = st.text_input("Describe your vision...", placeholder="e.g. A futuristic glass temple in the clouds")
+    negative = st.text_input("Negative Prompt (What to remove?)", placeholder="blur, ugly, bad hands, cartoon")
+
+with col_btn:
     st.write("")
     st.write("")
-    if st.button("✨ Enhance"):
-        if prompt:
-            prompt += ", 8k resolution, cinematic lighting, masterpiece"
-            st.toast("✨ Prompt Enhanced!")
+    generate = st.button("🚀 IGNITE", type="primary", use_container_width=True)
 
-if st.button("🚀 GENERATE", type="primary"):
-    if prompt:
-        clean_prompt = prompt.replace(" ", "%20")
-        
-        # 1. SHOW LOADING
-        with st.status("🎨 Starting Engine...", expanded=True) as status:
-            st.write("📡 Connecting to Satellite...")
+# ==========================================
+# 6. EXECUTION ENGINE
+# ==========================================
+if generate and prompt_text:
+    
+    # 1. BUILD THE MASTER PROMPT
+    final_prompt = prompt_text
+    if style != "None":
+        final_prompt += f", {style} style"
+    
+    # Clean up for URL
+    url_prompt = final_prompt.replace(" ", "%20")
+    seed = random.randint(0, 1000000)
+    
+    # 2. GENERATE URL
+    image_url = f"https://image.pollinations.ai/prompt/{url_prompt}?width={w}&height={h}&seed={seed}&nologo=true&model={model_code}"
+    
+    # 3. SHOW PREVIEW INSTANTLY
+    st.markdown(f"### ✨ Result: {style if style != 'None' else 'Custom'}")
+    
+    # Use a container to make it look framed
+    with st.container():
+        st.image(image_url, caption=f"{model} | {w}x{h}", use_container_width=True)
+    
+    # 4. BACKGROUND DOWNLOAD FETCH
+    with st.spinner("💾 Preparing High-Res File..."):
+        img_data = fetch_image(image_url)
+        if img_data:
+            c_dl1, c_dl2 = st.columns(2)
+            with c_dl1:
+                st.download_button("⬇️ DOWNLOAD NOW", data=img_data, file_name=f"akriti_{seed}.jpg", mime="image/jpeg", use_container_width=True)
+            with c_dl2:
+                st.success("✅ Ready to Save")
             
-            # Construct URL
-            image_url = f"https://image.pollinations.ai/prompt/{clean_prompt}?width={width}&height={height}&seed={final_seed}&nologo=true&model={selected_model}"
-            
-            # 2. INSTANT PREVIEW (Don't wait for download)
-            st.write("⚡ Streaming Pixels...")
-            status.update(label="STREAMING STARTED", state="complete", expanded=False)
+            # Save to History
+            st.session_state.history.insert(0, {"data": img_data, "prompt": final_prompt})
 
-        # Show the image via URL immediately (Browser handles loading)
-        st.image(image_url, caption=f"Seed: {final_seed}", use_container_width=True)
-        
-        # 3. BACKGROUND DOWNLOAD (Optional)
-        # We only try to fetch the file for the button AFTER showing the image
-        with st.spinner("Preparing Download Link..."):
-            img_data = fetch_image_bytes(image_url)
-            
-            if img_data:
-                st.download_button(
-                    label="⬇️ DOWNLOAD HD FILE",
-                    data=img_data,
-                    file_name=f"akriti_{final_seed}.jpg",
-                    mime="image/jpeg"
-                )
-            else:
-                st.warning("⚠️ Preview only (Download timed out, but you can screenshot!)")
-                
-    else:
-        st.warning("⚠️ Enter a prompt first.")
+# ==========================================
+# 7. GALLERY (Recent Works)
+# ==========================================
+if len(st.session_state.history) > 0:
+    st.markdown("---")
+    st.markdown("### 🕰️ Recent Creations")
+    
+    # Show last 3 images in columns
+    h_cols = st.columns(3)
+    for i, item in enumerate(st.session_state.history[:3]):
+        with h_cols[i]:
+            st.image(item['data'], use_container_width=True)
+            st.caption(item['prompt'][:30] + "...")
