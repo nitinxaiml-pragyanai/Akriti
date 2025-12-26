@@ -8,7 +8,7 @@ from groq import Groq
 # 1. CONFIGURATION & OMEGA THEME
 # ==========================================
 st.set_page_config(
-    page_title="AKRITI OMEGA",
+    page_title="AKRITI ",
     page_icon="👑",
     layout="wide"
 )
@@ -161,7 +161,7 @@ groq_key = get_groq_key()
 # ==========================================
 # 4. MAIN INTERFACE
 # ==========================================
-st.title("👑 AKRITI OMEGA")
+st.title("AKRITI ")
 st.markdown("### The Ultimate Visual Engine")
 
 tab_create, tab_remix = st.tabs(["✨ CREATE (Text-to-Image)", "🌪️ REMIX (Photo Editor)"])
