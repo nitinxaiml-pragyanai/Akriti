@@ -12,60 +12,64 @@ st.set_page_config(
     layout="wide"
 )
 
-# THE FIX: CSS THAT FORCES DARK MODE ON COMPONENTS
+# REVISED CSS - FIXES WHITE TEXT & IMPROVES FOOTER
 st.markdown("""
 <style>
-    /* 1. BACKGROUND */
+    /* 1. MAIN BACKGROUND */
     .stApp {
         background: linear-gradient(180deg, #020024 0%, #090979 35%, #00d4ff 100%);
         background-attachment: fixed;
     }
     
-    /* 2. TEXT COLOR (Force White) */
-    h1, h2, h3, p, span, div, label {
+    /* 2. GLOBAL TEXT COLOR (Safer approach) */
+    h1, h2, h3, h4, h5, h6, p, label {
         color: #ffffff !important;
     }
-
-    /* =========================================
-       FIXING THE "WHITE SHIT"
-       ========================================= */
-
-    /* FIX 1: THE EXPANDER (Settings Bar) */
-    /* This fixes the solid white bar at the top of settings */
-    div[data-testid="stExpander"] {
-        background-color: rgba(0, 0, 0, 0.6) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    
+    /* 3. FIX: THE FILE UPLOADER (The "White on White" fix) */
+    [data-testid="stFileUploaderDropzone"] {
+        background-color: rgba(0, 0, 0, 0.6) !important; /* Dark background for drop area */
+        border: 1px dashed #00d4ff !important;
         border-radius: 10px;
+    }
+    [data-testid="stFileUploaderDropzone"] div {
+        color: white !important; /* Force text inside to be white */
+    }
+    [data-testid="stFileUploaderDropzone"] button {
+        background: linear-gradient(90deg, #FF0099, #493240) !important; /* Custom button color */
+        border: 1px solid rgba(255,255,255,0.3) !important;
         color: white !important;
     }
-    div[data-testid="stExpander"] summary {
-        background-color: transparent !important; /* Removes white background */
+    
+    /* 4. FIX: EXPANDERS & SETTINGS */
+    div[data-testid="stExpander"] {
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
         color: white !important;
     }
     div[data-testid="stExpander"] summary:hover {
         color: #00d4ff !important;
     }
     div[data-testid="stExpander"] svg {
-        fill: white !important; /* Fixes the arrow icon */
+        fill: white !important;
     }
 
-    /* FIX 2: DROPDOWN MENUS (Selectbox) */
-    /* This fixes the white boxes for Model, Ratio, Style, etc. */
+    /* 5. FIX: INPUT FIELDS & DROPDOWNS */
+    .stTextInput > div > div > input {
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
     div[data-baseweb="select"] > div {
-        background-color: rgba(0, 0, 0, 0.6) !important; /* Dark background */
+        background-color: rgba(0, 0, 0, 0.6) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
     }
-    /* Fixes the text inside the box */
-    div[data-baseweb="select"] span {
-        color: white !important; 
-    }
-    /* Fixes the dropdown icon (triangle) */
     div[data-baseweb="select"] svg {
         fill: white !important;
     }
     
-    /* The Menu List (When you click the dropdown) */
+    /* Dropdown Menu Items */
     ul[data-testid="stSelectboxVirtualDropdown"] {
         background-color: #001f3f !important;
     }
@@ -77,57 +81,43 @@ st.markdown("""
         color: black !important;
     }
 
-    /* FIX 3: FILE UPLOADER (Browse Button) */
-    [data-testid="stFileUploader"] {
-        background-color: rgba(0, 0, 0, 0.3);
-        border: 1px dashed #00d4ff;
-        border-radius: 15px;
-        padding: 20px;
-    }
-    [data-testid="stFileUploader"] button {
-        background-color: rgba(0, 0, 0, 0.5) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    }
-
-    /* FIX 4: INPUT FIELDS */
-    .stTextInput > div > div > input {
-        background-color: rgba(0, 0, 0, 0.6) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    input::placeholder {
-        color: #cccccc !important;
-    }
-
-    /* FIX 5: BUTTONS */
+    /* 6. BUTTONS */
     div.stButton > button {
         background: linear-gradient(90deg, #FF0099, #493240) !important;
         border: 1px solid rgba(255,255,255,0.2) !important;
         color: white !important;
         font-weight: bold !important;
+        transition: all 0.3s ease;
+    }
+    div.stButton > button:hover {
+        border-color: #00d4ff !important;
+        box-shadow: 0 0 10px #00d4ff;
     }
 
-    /* =========================================
-       FOOTER
-       ========================================= */
+    /* 7. PREMIUM FOOTER (Transparent Glassmorphism) */
     .block-container {
-        padding-bottom: 100px; /* Prevents overlap */
+        padding-bottom: 80px;
     }
     .footer {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100%;
-        background: transparent;
-        color: rgba(255,255,255,0.8);
+        
+        /* Glass Effect */
+        background: rgba(0, 0, 0, 0.2); 
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        
+        color: rgba(255, 255, 255, 0.6);
         text-align: center;
-        padding: 15px;
-        font-size: 14px;
+        padding: 10px;
+        font-size: 12px;
+        letter-spacing: 1px;
         z-index: 9999;
         pointer-events: none;
-        text-shadow: 2px 2px 5px black; /* Visible on any background */
-        font-family: sans-serif;
     }
     
     #MainMenu, footer, header {visibility: hidden;}
@@ -257,6 +247,6 @@ with tab_remix:
 
 st.markdown("""
 <div class="footer">
-    <p>⚡ Powered by Samrion Intelligence | © 2026 Samrion AI Infrastructure | Founder: Nitin Raj</p>
+    POWERED BY SAMRION INTELLIGENCE &nbsp;|&nbsp; © 2026 SAMRION AI INFRASTRUCTURE &nbsp;|&nbsp; FOUNDER: NITIN RAJ
 </div>
 """, unsafe_allow_html=True)
