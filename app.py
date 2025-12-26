@@ -2,7 +2,7 @@ import streamlit as st
 import random
 import requests
 import time
-from groq import Groq 
+from groq import Groq
 
 # ==========================================
 # 1. CONFIGURATION & THEME ENGINE
@@ -13,12 +13,12 @@ st.set_page_config(
     layout="wide"
 )
 
-# THE HIGH-CONTRAST CSS PATCH
+# THE ULTRA-PREMIUM CSS PATCH
 st.markdown("""
 <style>
-    /* 1. GLOBAL FONT & COLOR */
-    .stApp, p, h1, h2, h3, h4, h5, label, span, div, button, small {
-        font-family: 'Inter', sans-serif;
+    /* 1. GLOBAL FONT & COLOR RESET */
+    .stApp, p, h1, h2, h3, h4, h5, label, span, div, small, li, button {
+        font-family: 'Inter', sans-serif !important;
         color: #ffffff !important;
     }
 
@@ -29,65 +29,91 @@ st.markdown("""
     }
 
     /* =========================================
-       3. CRITICAL UI VISIBILITY FIXES
+       3. CRITICAL VISIBILITY FIXES
        ========================================= */
     
-    /* FIX 1: FILE UPLOADER (The "Invisible" Box Fix) */
-    [data-testid="stFileUploader"] section {
-        background-color: rgba(0, 31, 63, 0.8) !important; /* Dark Blue Background */
-        border: 2px dashed #00d4ff;
+    /* FIX 1: THE MAGIC EXPAND BUTTON (Sparkle Icon) */
+    /* Force ALL buttons to use the Neon Gradient, even secondary ones */
+    div.stButton > button {
+        background: linear-gradient(90deg, #FF0099, #493240) !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        color: white !important;
+        font-weight: bold !important;
+        border-radius: 8px !important;
+        transition: 0.3s;
+    }
+    div.stButton > button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 15px #FF0099;
+    }
+    div.stButton > button:active {
+        background: #FF0099 !important;
+    }
+
+    /* FIX 2: FILE UPLOADER (The "Invisible" Box) */
+    [data-testid="stFileUploader"] {
+        background-color: rgba(0, 31, 63, 0.6);
+        border: 1px dashed #00d4ff;
         border-radius: 15px;
+        padding: 20px;
     }
-    /* Force the small text inside uploader to be white */
     [data-testid="stFileUploader"] small {
-        color: #e0e0e0 !important;
-        opacity: 1 !important;
-    }
-    /* The button inside the uploader */
-    [data-testid="stFileUploader"] button {
-        background-color: rgba(255,255,255,0.1);
-        border: 1px solid white;
+        color: #e0e0e0 !important; /* Make "Limit 200MB" visible */
     }
 
-    /* FIX 2: INPUT PLACEHOLDERS (The "Camouflaged" Text Fix) */
-    /* This makes the "e.g. Make me a cyborg" text visible */
-    input::placeholder, textarea::placeholder {
-        color: #cfcfcf !important; /* Bright Grey */
-        opacity: 1 !important;
-    }
-    /* The input box itself */
+    /* FIX 3: INPUT FIELDS (Text & Placeholders) */
     .stTextInput > div > div > input {
-        background-color: rgba(0, 0, 0, 0.6) !important; /* Dark background */
-        color: white !important; /* White typed text */
-        border: 1px solid rgba(255,255,255,0.3);
+        background-color: rgba(0, 0, 0, 0.6) !important; /* Dark Glass */
+        color: #ffffff !important; /* White Text */
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    /* The placeholder text "e.g. Make me a cyborg" */
+    input::placeholder {
+        color: #cccccc !important; /* Light Grey */
+        opacity: 1;
     }
 
-    /* FIX 3: DROPDOWN MENUS */
-    /* Forces the popup list to be Dark Blue */
+    /* FIX 4: DROPDOWN MENUS (The Popup List) */
     div[data-baseweb="popover"], div[data-baseweb="menu"], ul {
-        background-color: #001f3f !important;
+        background-color: #001f3f !important; /* Dark Blue Background */
     }
     li[role="option"] {
-        background-color: #001f3f !important;
+        background-color: transparent !important;
         color: white !important;
     }
+    /* Highlight color when hovering an option */
+    li[role="option"]:hover {
+        background-color: #00d4ff !important;
+        color: black !important;
+    }
+    /* The box when closed */
+    div[data-baseweb="select"] > div {
+        background-color: rgba(0,0,0,0.4) !important;
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
 
-    /* 4. COMPANY FOOTER */
+    /* =========================================
+       4. THE "TRANSPARENT" PRO FOOTER
+       ========================================= */
     .footer {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        color: #888;
+        background: transparent; /* Totally Transparent */
+        backdrop-filter: blur(5px); /* Subtle Glass Blur */
+        color: rgba(255, 255, 255, 0.6); /* Slightly faded white */
         text-align: center;
         padding: 10px;
-        font-size: 12px;
+        font-size: 11px;
+        letter-spacing: 1px;
         z-index: 999;
-        pointer-events: none; /* Let clicks pass through */
+        pointer-events: none;
+        text-shadow: 1px 1px 2px black; /* Shadow ensures readability on any color */
     }
 
-    /* HIDE STREAMLIT BRANDING */
+    /* HIDE JUNK */
     #MainMenu, footer, header {visibility: hidden;}
     
 </style>
@@ -173,12 +199,15 @@ with tab_create:
         st.session_state.create_prompt = prompt_input
     with col_b:
         st.write("") 
+        # The Sparkle Button
         if st.button("✨ Magic Expand", key="magic_c", use_container_width=True):
             if groq_key and st.session_state.create_prompt:
                 with st.spinner("✨ Enhancing..."):
                     st.session_state.create_prompt = expand_prompt_with_ai(st.session_state.create_prompt, groq_key)
                     st.rerun()
 
+    # GENERATE BUTTON
+    st.write("")
     if st.button("🚀 IGNITE GENERATION", type="primary", use_container_width=True):
         if st.session_state.create_prompt:
             final_p = st.session_state.create_prompt + (f", {style} style" if style != "None" else "")
@@ -201,6 +230,7 @@ with tab_remix:
         remix_in = st.text_input("What to change?", value=st.session_state.remix_prompt, key="r_input", placeholder="e.g. Make me a cyborg")
         st.session_state.remix_prompt = remix_in
         
+        # Magic Expand Button (Remix)
         if st.button("✨ Magic Expand", key="magic_r"):
             if groq_key and st.session_state.remix_prompt:
                 with st.spinner("✨ Enhancing..."):
@@ -209,6 +239,7 @@ with tab_remix:
                     
         remix_model = st.selectbox("Remix Engine", ["flux-realism", "flux-anime", "flux-3d"])
         
+        st.write("")
         if st.button("🌪️ REMIX PHOTO", type="primary", use_container_width=True):
             if uploaded_file and st.session_state.remix_prompt:
                 with st.status("Processing...", expanded=True):
@@ -219,7 +250,7 @@ with tab_remix:
                         data = fetch_image(url)
                         if data: st.download_button("⬇️ DOWNLOAD REMIX", data=data, file_name="remix.jpg", mime="image/jpeg")
 
-# COMPANY FOOTER
+# THE INVISIBLE FOOTER (Transparent & Professional)
 st.markdown("""
 <div class="footer">
     <p>⚡ Powered by Samrion Intelligence | © 2025 Samrion Technologies | Founder: Nitin Raj</p>
