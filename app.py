@@ -15,8 +15,8 @@ except ImportError as e:
 # 1. CONFIGURATION & THEME ENGINE
 # ==========================================
 st.set_page_config(
-    page_title="AKRITI OMEGA",
-    page_icon="👑",
+    page_title="AKRITI ",
+    page_icon="👁",
     layout="wide"
 )
 
@@ -156,7 +156,7 @@ if 'create_prompt' not in st.session_state: st.session_state.create_prompt = ""
 if 'remix_prompt' not in st.session_state: st.session_state.remix_prompt = ""
 groq_key = get_groq_key()
 
-st.title("👑 AKRITI OMEGA")
+st.title("👑 AKRITI ")
 st.caption("Samrion Intelligence Visual Engine")
 
 tab1, tab2 = st.tabs(["✨ GENERATE", "🌪️ REMIX"])
