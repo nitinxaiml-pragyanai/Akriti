@@ -34,7 +34,7 @@ st.markdown("""
         color: #ffffff !important;
     }
     
-    /* 3. FILE UPLOADER (Fixing the White Box) */
+    /* 3. FILE UPLOADER */
     [data-testid="stFileUploaderDropzone"] {
         background-color: rgba(0, 0, 0, 0.6) !important;
         border: 1px dashed #00d4ff !important;
@@ -74,14 +74,14 @@ st.markdown("""
         font-weight: bold !important;
     }
 
-    /* 6. GLASSMORPHIC FOOTER (Transparent & Premium) */
+    /* 6. GLASSMORPHIC FOOTER */
     .footer {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100%;
         background: rgba(0, 0, 0, 0.3);
-        backdrop-filter: blur(8px); /* The Glass Effect */
+        backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         border-top: 1px solid rgba(255,255,255,0.1);
         color: rgba(255,255,255,0.7) !important;
@@ -101,14 +101,13 @@ st.markdown("""
 # ==========================================
 
 def get_groq_key():
-    # Safely try to get key, return None if missing
     try: return st.secrets["GROQ_API_KEY"]
     except: return None
 
 def expand_prompt_with_ai(short_prompt, api_key):
     if not short_prompt: return ""
     if not api_key:
-        st.warning("⚠️ API Key missing in `.streamlit/secrets.toml`. Prompt expansion skipped.")
+        st.warning("⚠️ API Key missing. Using raw prompt.")
         return short_prompt
         
     try:
@@ -126,25 +125,28 @@ def expand_prompt_with_ai(short_prompt, api_key):
         st.error(f"AI Error: {e}")
         return short_prompt
 
-def fetch_image(url):
+def get_image_bytes(url):
+    """
+    Downloads the image data directly into memory so Streamlit can display it 
+    without relying on external URL loading in the browser.
+    """
     try:
-        r = requests.get(url, timeout=15)
-        if r.status_code == 200: return r.content
-    except: return None
+        response = requests.get(url, timeout=30) # 30s timeout for 8K
+        if response.status_code == 200:
+            return response.content
+        return None
+    except:
+        return None
 
 def upload_to_pollinations(uploaded_file):
-    # Uploads image to get a URL for the Remix feature
     try:
         files = {'file': uploaded_file.getvalue()}
-        # Note: This endpoint returns the URL of the uploaded image
         response = requests.post('https://image.pollinations.ai/upload', files=files)
         if response.status_code == 200:
             return response.text.strip()
         else:
-            st.error("Upload failed. Server might be busy.")
             return None
-    except Exception as e:
-        st.error(f"Connection Error: {e}")
+    except:
         return None
 
 # ==========================================
@@ -166,13 +168,16 @@ with tab1:
     # Settings Row
     c1, c2, c3 = st.columns(3)
     with c1:
-        # We separate the "Label" from the "Value" for the API
         model_choice = st.selectbox("Model", ["Flux (High Quality)", "Turbo (Fast)"])
         model_api = "flux" if "Flux" in model_choice else "turbo"
         
     with c2:
+        # Increased resolution for 8K request
         ratio = st.selectbox("Ratio", ["Square (1:1)", "Portrait (9:16)", "Landscape (16:9)"])
-        width, height = (1024, 1024) if "Square" in ratio else (768, 1344) if "Portrait" in ratio else (1344, 768)
+        # Using maximum safe resolution for Pollinations
+        if "Square" in ratio: width, height = 2048, 2048
+        elif "Portrait" in ratio: width, height = 1080, 1920
+        elif "Landscape" in ratio: width, height = 1920, 1080
         
     with c3:
         style = st.selectbox("Style", ["Realistic", "Anime", "3D Render", "Cyberpunk", "Oil Painting", "None"])
@@ -187,23 +192,38 @@ with tab1:
                 st.session_state.create_prompt = expand_prompt_with_ai(st.session_state.create_prompt, groq_key)
                 st.rerun()
 
-    if st.button("🚀 IGNITE", type="primary", use_container_width=True):
+    if st.button("🚀 IGNITE (GENERATE 8K)", type="primary", use_container_width=True):
         if st.session_state.create_prompt:
-            # Construct Final Prompt
+            # 1. BUILD PROMPT
             final_prompt = st.session_state.create_prompt
+            # Force high quality keywords
+            final_prompt += ", 8k resolution, masterpiece, highly detailed, ultra realistic"
             if style != "None":
-                final_prompt += f", {style} style, 8k resolution, highly detailed"
+                final_prompt += f", {style} style"
             
-            # URL Construction
             seed = random.randint(0, 99999)
             image_url = f"https://image.pollinations.ai/prompt/{final_prompt}?width={width}&height={height}&seed={seed}&nologo=true&model={model_api}"
             
-            st.image(image_url, caption="Generated Result", use_container_width=True)
-            
-            # Download Logic
-            img_data = fetch_image(image_url)
-            if img_data:
-                st.download_button("⬇️ SAVE IMAGE", data=img_data, file_name=f"akriti_{seed}.jpg", mime="image/jpeg", use_container_width=True)
+            # 2. FETCH & DISPLAY
+            with st.status("🎨 Rendering 8K Image...", expanded=True) as status:
+                st.write("✨ contacting render engine...")
+                img_data = get_image_bytes(image_url)
+                
+                if img_data:
+                    status.update(label="✅ Complete!", state="complete", expanded=False)
+                    st.image(img_data, caption=f"Generated Result (Seed: {seed})", use_container_width=True)
+                    
+                    # 3. DOWNLOAD BUTTON (Only shows if image exists)
+                    st.download_button(
+                        label="⬇️ DOWNLOAD 8K IMAGE",
+                        data=img_data,
+                        file_name=f"akriti_{seed}.jpg",
+                        mime="image/jpeg",
+                        use_container_width=True
+                    )
+                else:
+                    status.update(label="❌ Error", state="error")
+                    st.error("Server Timeout: The image was too large or the server is busy. Try 'Turbo' model or slightly lower resolution.")
 
 # --- TAB 2: REMIX ---
 with tab2:
@@ -220,21 +240,25 @@ with tab2:
         
         if st.button("🌪️ REMIX NOW", type="primary", use_container_width=True):
             if uploaded and st.session_state.remix_prompt:
-                with st.status("Processing remix...", expanded=True):
-                    st.write("📤 Uploading image...")
+                with st.status("Processing Remix...", expanded=True) as status:
+                    st.write("📤 Uploading base image...")
                     base_url = upload_to_pollinations(uploaded)
                     
                     if base_url:
-                        st.write("🎨 Applying style...")
+                        st.write("🎨 Applying 8K Transformation...")
                         seed = random.randint(0, 99999)
-                        # Pollinations Remix URL Pattern
-                        remix_url = f"https://image.pollinations.ai/prompt/{st.session_state.remix_prompt}?image={base_url}&seed={seed}&nologo=true&model=flux"
+                        remix_url = f"https://image.pollinations.ai/prompt/{st.session_state.remix_prompt}?image={base_url}&seed={seed}&nologo=true&model=flux&width=1920&height=1080"
                         
-                        st.image(remix_url, caption="Remixed Result", use_container_width=True)
+                        img_data = get_image_bytes(remix_url)
                         
-                        r_data = fetch_image(remix_url)
-                        if r_data:
-                            st.download_button("⬇️ SAVE REMIX", data=r_data, file_name=f"remix_{seed}.jpg", mime="image/jpeg")
+                        if img_data:
+                            status.update(label="✅ Remix Complete!", state="complete", expanded=False)
+                            st.image(img_data, caption="Remixed Result", use_container_width=True)
+                            st.download_button("⬇️ DOWNLOAD REMIX", data=img_data, file_name=f"remix_{seed}.jpg", mime="image/jpeg", use_container_width=True)
+                        else:
+                            st.error("Remix failed during generation.")
+                    else:
+                        st.error("Upload failed.")
 
 # FOOTER
 st.markdown("""
