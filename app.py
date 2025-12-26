@@ -5,19 +5,19 @@ import time
 from groq import Groq 
 
 # ==========================================
-# 1. CONFIGURATION & OMEGA THEME
+# 1. CONFIGURATION & THEME ENGINE
 # ==========================================
 st.set_page_config(
-    page_title="AKRITI ",
+    page_title="AKRITI OMEGA",
     page_icon="👑",
     layout="wide"
 )
 
-# THE NUCLEAR CSS (Forces Dark Mode Everywhere)
+# THE HIGH-CONTRAST CSS PATCH
 st.markdown("""
 <style>
-    /* 1. GLOBAL FONT & TEXT COLOR */
-    .stApp, p, h1, h2, h3, h4, h5, label, span, div, button, li {
+    /* 1. GLOBAL FONT & COLOR */
+    .stApp, p, h1, h2, h3, h4, h5, label, span, div, button, small {
         font-family: 'Inter', sans-serif;
         color: #ffffff !important;
     }
@@ -28,85 +28,63 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    /* 3. FIX: FILE UPLOADER (The "White Box" Fix) */
-    [data-testid="stFileUploader"] {
-        background-color: rgba(0, 31, 63, 0.8);
+    /* =========================================
+       3. CRITICAL UI VISIBILITY FIXES
+       ========================================= */
+    
+    /* FIX 1: FILE UPLOADER (The "Invisible" Box Fix) */
+    [data-testid="stFileUploader"] section {
+        background-color: rgba(0, 31, 63, 0.8) !important; /* Dark Blue Background */
+        border: 2px dashed #00d4ff;
         border-radius: 15px;
-        padding: 20px;
-        border: 1px dashed #00d4ff;
     }
-    /* This forces the inner drag-drop zone to be transparent/dark */
-    section[data-testid="stFileUploaderDropzone"] {
-        background-color: rgba(0,0,0,0.3) !important;
+    /* Force the small text inside uploader to be white */
+    [data-testid="stFileUploader"] small {
+        color: #e0e0e0 !important;
+        opacity: 1 !important;
     }
-    /* This ensures the small text inside is white */
-    [data-testid="stFileUploaderDropzone"] div, 
-    [data-testid="stFileUploaderDropzone"] span, 
-    [data-testid="stFileUploaderDropzone"] small {
-        color: #ffffff !important;
+    /* The button inside the uploader */
+    [data-testid="stFileUploader"] button {
+        background-color: rgba(255,255,255,0.1);
+        border: 1px solid white;
     }
 
-    /* 4. FIX: DROPDOWN MENUS (The "Invisible Option" Fix) */
+    /* FIX 2: INPUT PLACEHOLDERS (The "Camouflaged" Text Fix) */
+    /* This makes the "e.g. Make me a cyborg" text visible */
+    input::placeholder, textarea::placeholder {
+        color: #cfcfcf !important; /* Bright Grey */
+        opacity: 1 !important;
+    }
+    /* The input box itself */
+    .stTextInput > div > div > input {
+        background-color: rgba(0, 0, 0, 0.6) !important; /* Dark background */
+        color: white !important; /* White typed text */
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    /* FIX 3: DROPDOWN MENUS */
     /* Forces the popup list to be Dark Blue */
     div[data-baseweb="popover"], div[data-baseweb="menu"], ul {
         background-color: #001f3f !important;
-        border: 1px solid #00d4ff;
     }
-    /* Forces options to be white */
     li[role="option"] {
         background-color: #001f3f !important;
         color: white !important;
     }
-    /* Highlight color when hovering */
-    li[role="option"]:hover {
-        background-color: #00d4ff !important;
-        color: black !important;
-    }
-    
-    /* 5. FIX: INPUT BOXES & PLACEHOLDERS */
-    .stTextInput > div > div > input {
-        background-color: rgba(0,0,0,0.5) !important;
-        color: white !important;
-        border: 1px solid rgba(255,255,255,0.3);
-        border-radius: 10px;
-    }
-    /* Makes "Describe your vision..." visible light gray */
-    .stTextInput input::placeholder {
-        color: rgba(200, 200, 200, 0.8) !important;
-    }
 
-    /* 6. TABS STYLE */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 20px;
-        background-color: rgba(0,0,0,0.3);
-        padding: 15px;
-        border-radius: 20px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        background-color: rgba(255,255,255,0.05);
-        border-radius: 10px;
-        border: 1px solid rgba(255,255,255,0.1);
-        padding: 10px 30px;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #00d4ff !important;
-        color: #000000 !important;
-        font-weight: bold;
-    }
-
-    /* 7. FOOTER STYLE */
+    /* 4. COMPANY FOOTER */
     .footer {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100%;
-        background-color: rgba(0, 31, 63, 0.9);
-        color: #888888 !important;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: #888;
         text-align: center;
         padding: 10px;
         font-size: 12px;
-        border-top: 1px solid #00d4ff;
         z-index: 999;
+        pointer-events: none; /* Let clicks pass through */
     }
 
     /* HIDE STREAMLIT BRANDING */
@@ -118,25 +96,28 @@ st.markdown("""
 # ==========================================
 # 2. HELPER FUNCTIONS & AI BRAIN
 # ==========================================
+
 def get_groq_key():
     try: return st.secrets["GROQ_API_KEY"]
     except: return None
 
+# --- Magic Expand (AI Prompting) ---
 def expand_prompt_with_ai(short_prompt, api_key):
-    if not short_prompt or not api_key: return None
+    if not short_prompt: return ""
+    if not api_key: return "⚠️ API Key Missing."
+    
     try:
         client = Groq(api_key=api_key)
         completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
-                {"role": "system", "content": "You are an expert AI prompt engineer. Turn the user's short idea into a highly detailed, descriptive image prompt (lighting, texture, mood, 8k). Keep it one paragraph."},
-                {"role": "user", "content": f"Expand: '{short_prompt}'"}
+                {"role": "system", "content": "You are an expert visual prompt engineer. Expand the user's short idea into a detailed, artistic image generation prompt. Keep it one paragraph."},
+                {"role": "user", "content": f"Expand this idea: '{short_prompt}'"}
             ],
-            temperature=0.7,
-            max_tokens=300,
+            temperature=0.7, max_tokens=300
         )
         return completion.choices[0].message.content
-    except: return None
+    except: return short_prompt
 
 def fetch_image(url):
     try:
@@ -161,15 +142,17 @@ groq_key = get_groq_key()
 # ==========================================
 # 4. MAIN INTERFACE
 # ==========================================
-st.title("AKRITI ")
+st.title("👑 AKRITI OMEGA")
 st.markdown("### The Ultimate Visual Engine")
 
-tab_create, tab_remix = st.tabs(["✨ CREATE (Text-to-Image)", "🌪️ REMIX (Photo Editor)"])
+tab_create, tab_remix = st.tabs(["✨ CREATE", "🌪️ REMIX"])
 
 # === TAB 1: CREATE ===
 with tab_create:
     st.markdown("<br>", unsafe_allow_html=True)
-    with st.expander("🎛️ CONTROL DECK (Settings)", expanded=True):
+    
+    # CONTROL DECK
+    with st.expander("🎛️ SETTINGS (Model, Size, Style)", expanded=True):
         c1, c2, c3 = st.columns(3)
         with c1:
             model = st.selectbox("Model", ["Flux (Best)", "Flux-Realism", "Flux-Anime", "Flux-3D", "Turbo (Fast)"])
@@ -183,78 +166,62 @@ with tab_create:
         with c3:
             style = st.selectbox("Style", ["None", "Cyberpunk", "Cinematic", "Oil Painting", "Pixar 3D", "Dark Fantasy"])
 
-    st.markdown("#### ✍️ Describe your vision")
+    # INPUT & MAGIC EXPAND
     col_p, col_b = st.columns([4, 1])
     with col_p:
-        prompt_input = st.text_input("Enter idea...", value=st.session_state.create_prompt, key="create_input", placeholder="e.g. A golden temple")
+        prompt_input = st.text_input("Describe your vision...", value=st.session_state.create_prompt, key="c_input", placeholder="e.g. A golden temple in clouds")
         st.session_state.create_prompt = prompt_input
     with col_b:
-        if st.button("✨ Magic Expand", key="magic_create_btn", use_container_width=True):
+        st.write("") 
+        if st.button("✨ Magic Expand", key="magic_c", use_container_width=True):
             if groq_key and st.session_state.create_prompt:
-                with st.spinner("✨ AI is dreaming..."):
-                    expanded = expand_prompt_with_ai(st.session_state.create_prompt, groq_key)
-                    if expanded:
-                        st.session_state.create_prompt = expanded
-                        st.rerun()
-            else: st.toast("⚠️ Key missing or empty prompt")
+                with st.spinner("✨ Enhancing..."):
+                    st.session_state.create_prompt = expand_prompt_with_ai(st.session_state.create_prompt, groq_key)
+                    st.rerun()
 
-    st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🚀 IGNITE GENERATION", type="primary", use_container_width=True):
         if st.session_state.create_prompt:
             final_p = st.session_state.create_prompt + (f", {style} style" if style != "None" else "")
-            url_p = final_p.replace(" ", "%20")
-            seed = random.randint(0, 1000000)
-            url = f"https://image.pollinations.ai/prompt/{url_p}?width={w}&height={h}&seed={seed}&nologo=true&model={model_code}"
+            url = f"https://image.pollinations.ai/prompt/{final_p.replace(' ', '%20')}?width={w}&height={h}&seed={random.randint(0,1000)}&nologo=true&model={model_code}"
             
-            st.markdown(f"### ✨ Result")
-            st.image(url, caption=f"{model} | {w}x{h}", use_container_width=True)
-            with st.spinner("Preparing Download..."):
-                data = fetch_image(url)
-                if data: st.download_button("⬇️ DOWNLOAD HD", data, f"akriti_{seed}.jpg", "image/jpeg", use_container_width=True)
+            st.image(url, caption="Generated by Akriti", use_container_width=True)
+            data = fetch_image(url)
+            if data: st.download_button("⬇️ DOWNLOAD HD", data=data, file_name="akriti.jpg", mime="image/jpeg", use_container_width=True)
 
 # === TAB 2: REMIX ===
 with tab_remix:
     st.markdown("<br>", unsafe_allow_html=True)
-    col_up, col_set = st.columns([1, 1], gap="large")
-    with col_up:
-        st.markdown("#### 1. Upload Photo")
-        uploaded = st.file_uploader("", type=["jpg", "png", "jpeg"])
-        if uploaded: st.image(uploaded, caption="Base", use_container_width=True)
-    with col_set:
-        st.markdown("#### 2. Describe Edit")
-        col_rp, col_rb = st.columns([3, 1])
-        with col_rp:
-            remix_in = st.text_input("Change what?", value=st.session_state.remix_prompt, key="remix_in", placeholder="e.g. Make me a cyborg")
-            st.session_state.remix_prompt = remix_in
-        with col_rb:
-             if st.button("✨ Expand", key="magic_remix", use_container_width=True):
-                if groq_key and st.session_state.remix_prompt:
-                    with st.spinner("AI thinking..."):
-                        exp = expand_prompt_with_ai(f"Edit image: {st.session_state.remix_prompt}", groq_key)
-                        if exp:
-                            st.session_state.remix_prompt = exp
-                            st.rerun()
+    c_up, c_set = st.columns(2)
+    
+    with c_up:
+        uploaded_file = st.file_uploader("Upload Base Photo", type=["jpg", "png", "jpeg"])
+        if uploaded_file: st.image(uploaded_file, caption="Base", use_container_width=True)
 
-        st.markdown("#### 3. Engine")
-        r_model = st.selectbox("Engine", ["Flux-Realism", "Flux-Anime", "Flux-3D"])
-        st.markdown("<br>", unsafe_allow_html=True)
+    with c_set:
+        remix_in = st.text_input("What to change?", value=st.session_state.remix_prompt, key="r_input", placeholder="e.g. Make me a cyborg")
+        st.session_state.remix_prompt = remix_in
+        
+        if st.button("✨ Magic Expand", key="magic_r"):
+            if groq_key and st.session_state.remix_prompt:
+                with st.spinner("✨ Enhancing..."):
+                    st.session_state.remix_prompt = expand_prompt_with_ai(st.session_state.remix_prompt, groq_key)
+                    st.rerun()
+                    
+        remix_model = st.selectbox("Remix Engine", ["flux-realism", "flux-anime", "flux-3d"])
+        
         if st.button("🌪️ REMIX PHOTO", type="primary", use_container_width=True):
-            if uploaded and st.session_state.remix_prompt:
-                with st.status("🌪️ Processing...", expanded=True):
-                    base_url = upload_to_pollinations(uploaded)
+            if uploaded_file and st.session_state.remix_prompt:
+                with st.status("Processing...", expanded=True):
+                    base_url = upload_to_pollinations(uploaded_file)
                     if base_url:
-                        p = st.session_state.remix_prompt.replace(" ", "%20")
-                        seed = random.randint(0, 1000000)
-                        url = f"https://image.pollinations.ai/prompt/{p}?image={base_url}&seed={seed}&nologo=true&model={r_model.lower()}"
+                        url = f"https://image.pollinations.ai/prompt/{st.session_state.remix_prompt.replace(' ', '%20')}?image={base_url}&seed={random.randint(0,1000)}&nologo=true&model={remix_model}"
                         st.image(url, caption="Remix", use_container_width=True)
                         data = fetch_image(url)
-                        if data: st.download_button("⬇️ DOWNLOAD REMIX", data, f"remix_{seed}.jpg", "image/jpeg", use_container_width=True)
+                        if data: st.download_button("⬇️ DOWNLOAD REMIX", data=data, file_name="remix.jpg", mime="image/jpeg")
 
-# ==========================================
-# 5. COMPANY FOOTER
-# ==========================================
+# COMPANY FOOTER
 st.markdown("""
 <div class="footer">
-    <p>© 2025 Samrion AI Infrastructure. Built by Nitin Raj. All Rights Reserved.</p>
+    <p>⚡ Powered by Samrion Intelligence | © 2025 Samrion Technologies | Founder: Nitin Raj</p>
 </div>
 """, unsafe_allow_html=True)
