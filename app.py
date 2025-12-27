@@ -2,46 +2,50 @@ import streamlit as st
 import random
 import time
 
-# --- SAFETY CHECK: TRY IMPORTS ---
+# --- 1. ROBUST DEPENDENCY CHECK ---
 try:
     import requests
     from groq import Groq
 except ImportError as e:
-    st.error(f"🚨 MISSING LIBRARY: {e}")
-    st.info("Please run this command in your terminal:  pip install requests groq streamlit")
+    st.error(f"🚨 SYSTEM ERROR: Missing Library '{e.name}'")
+    st.info(f"Run this command to fix:  pip install requests groq streamlit")
     st.stop()
 
 # ==========================================
-# 1. CONFIGURATION & THEME ENGINE
+# 2. APP CONFIGURATION & STYLING
 # ==========================================
 st.set_page_config(
     page_title="AKRITI OMEGA",
     page_icon="👑",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# FIXED CSS: Dark Theme + Transparent Footer + White Text
+# ULTRA-PREMIUM CSS SUITE
 st.markdown("""
 <style>
-    /* 1. MAIN BACKGROUND */
+    /* 1. BACKGROUND ENGINE */
     .stApp {
         background: linear-gradient(180deg, #020024 0%, #090979 35%, #00d4ff 100%);
         background-attachment: fixed;
     }
     
-    /* 2. TEXT VISIBILITY FIX */
-    h1, h2, h3, h4, h5, p, label, span, div {
+    /* 2. TEXT & FONT ENGINE */
+    h1, h2, h3, h4, h5, p, label, span, div, li {
         color: #ffffff !important;
+        font-family: 'Helvetica Neue', sans-serif;
     }
     
-    /* 3. FILE UPLOADER */
+    /* 3. COMPONENT: FILE UPLOADER */
     [data-testid="stFileUploaderDropzone"] {
         background-color: rgba(0, 0, 0, 0.6) !important;
-        border: 1px dashed #00d4ff !important;
+        border: 2px dashed #00d4ff !important;
         border-radius: 15px;
+        transition: all 0.3s ease;
     }
-    [data-testid="stFileUploaderDropzone"] div {
-        color: white !important;
+    [data-testid="stFileUploaderDropzone"]:hover {
+        background-color: rgba(0, 0, 0, 0.8) !important;
+        border-color: #FF0099 !important;
     }
     [data-testid="stFileUploaderDropzone"] button {
         background: rgba(255, 255, 255, 0.1) !important;
@@ -49,55 +53,63 @@ st.markdown("""
         border: 1px solid white !important;
     }
 
-    /* 4. INPUTS & DROPDOWNS */
+    /* 4. COMPONENT: INPUTS & DROPDOWNS */
     .stTextInput > div > div > input {
         background-color: rgba(0, 0, 0, 0.6) !important;
         color: white !important;
         border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
     }
     div[data-baseweb="select"] > div {
         background-color: rgba(0, 0, 0, 0.6) !important;
         color: white !important;
         border: 1px solid rgba(255,255,255,0.3) !important;
+        border-radius: 8px;
     }
     div[data-baseweb="select"] svg { fill: white !important; }
     
-    /* Dropdown Options */
+    /* Dropdown Menu Items */
     ul[data-testid="stSelectboxVirtualDropdown"] { background-color: #001f3f !important; }
     li[role="option"]:hover { background-color: #00d4ff !important; color: black !important; }
 
-    /* 5. BUTTONS */
+    /* 5. COMPONENT: BUTTONS */
     div.stButton > button {
         background: linear-gradient(90deg, #FF0099, #493240) !important;
         border: 1px solid rgba(255,255,255,0.2) !important;
         color: white !important;
-        font-weight: bold !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: transform 0.1s;
+    }
+    div.stButton > button:active {
+        transform: scale(0.98);
     }
 
-    /* 6. GLASSMORPHIC FOOTER */
+    /* 6. COMPONENT: FOOTER */
     .footer {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100%;
-        background: rgba(0, 0, 0, 0.3);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         border-top: 1px solid rgba(255,255,255,0.1);
-        color: rgba(255,255,255,0.7) !important;
+        color: rgba(255,255,255,0.8) !important;
         text-align: center;
-        padding: 12px;
-        font-size: 13px;
-        letter-spacing: 1.5px;
+        padding: 15px;
+        font-size: 12px;
+        letter-spacing: 2px;
         z-index: 9999;
     }
-    .block-container { padding-bottom: 100px; }
+    .block-container { padding-bottom: 120px; }
     #MainMenu, footer, header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. BACKEND LOGIC
+# 3. CORE INTELLIGENCE FUNCTIONS
 # ==========================================
 
 def get_groq_key():
@@ -107,7 +119,7 @@ def get_groq_key():
 def expand_prompt_with_ai(short_prompt, api_key):
     if not short_prompt: return ""
     if not api_key:
-        st.warning("⚠️ API Key missing. Using raw prompt.")
+        st.toast("⚠️ API Key missing in secrets. Using raw prompt.", icon="⚠️")
         return short_prompt
         
     try:
@@ -115,33 +127,36 @@ def expand_prompt_with_ai(short_prompt, api_key):
         completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
-                {"role": "system", "content": "You are an expert visual prompt engineer. Expand the user's short idea into a detailed, artistic image generation prompt (max 50 words)."},
-                {"role": "user", "content": f"Expand this: '{short_prompt}'"}
+                {"role": "system", "content": "You are a visual prompt expert. Convert the user's idea into a highly detailed, artistic image prompt with lighting and texture details. Keep it under 60 words."},
+                {"role": "user", "content": f"Enhance this concept: '{short_prompt}'"}
             ],
-            temperature=0.7, max_tokens=150
+            temperature=0.7, max_tokens=200
         )
         return completion.choices[0].message.content
     except Exception as e:
-        st.error(f"AI Error: {e}")
+        st.error(f"AI Expansion Failed: {e}")
         return short_prompt
 
 def get_image_bytes(url):
     """
-    Downloads image with RETRY logic.
-    If it fails, it waits 2 seconds and tries again (max 3 times).
+    TRIPLE RETRY ENGINE:
+    Tries 3 times to fetch the image. Includes headers to avoid being blocked.
     """
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+    }
+    
     max_retries = 3
-    for attempt in range(max_retries):
+    for attempt in range(1, max_retries + 1):
         try:
-            # Attempt download with 100s timeout
-            response = requests.get(url, timeout=100) 
+            # 60 second timeout is plenty for 1280px images
+            response = requests.get(url, headers=headers, timeout=60)
             if response.status_code == 200:
                 return response.content
         except requests.exceptions.RequestException:
-            pass # Just continue to next attempt
+            pass # Fail silently and try again
         
-        # Wait before retrying (backoff)
-        time.sleep(2)
+        time.sleep(2) # Wait 2 seconds before retry
     
     return None
 
@@ -157,116 +172,126 @@ def upload_to_pollinations(uploaded_file):
         return None
 
 # ==========================================
-# 3. UI LAYOUT
+# 4. USER INTERFACE
 # ==========================================
+
+# Initialize Session State
 if 'create_prompt' not in st.session_state: st.session_state.create_prompt = ""
 if 'remix_prompt' not in st.session_state: st.session_state.remix_prompt = ""
 groq_key = get_groq_key()
 
 st.title("👑 AKRITI OMEGA")
-st.caption("Samrion Intelligence Visual Engine")
+st.caption("Samrion Intelligence | Visual Engine v4.0")
 
+# Tabs
 tab1, tab2 = st.tabs(["✨ GENERATE", "🌪️ REMIX"])
 
-# --- TAB 1: GENERATE ---
+# --- TAB 1: CREATION ENGINE ---
 with tab1:
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Settings Row
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        model_choice = st.selectbox("Model", ["Flux (High Quality)", "Turbo (Fast)"])
-        model_api = "flux" if "Flux" in model_choice else "turbo"
-        
-    with c2:
-        ratio = st.selectbox("Ratio", ["Square (1:1)", "Portrait (9:16)", "Landscape (16:9)"])
-        # === STABLE HD SETTINGS ===
-        # These are "Safe HD" resolutions that don't crash the server
-        if "Square" in ratio: width, height = 1024, 1024
-        elif "Portrait" in ratio: width, height = 768, 1280
-        elif "Landscape" in ratio: width, height = 1280, 768
-        
-    with c3:
-        style = st.selectbox("Style", ["Realistic", "Anime", "3D Render", "Cyberpunk", "Oil Painting", "None"])
+    # CONTROL PANEL
+    with st.container():
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            model_choice = st.selectbox("Model Engine", ["Flux (High Detail)", "Turbo (Speed)"])
+            model_api = "flux" if "Flux" in model_choice else "turbo"
+            
+        with c2:
+            ratio = st.selectbox("Frame Ratio", ["Square (1:1)", "Portrait (9:16)", "Landscape (16:9)"])
+            # === SAFE RESOLUTION LOCK ===
+            # These resolutions are tested to be safe from 504 Timeouts
+            if "Square" in ratio: width, height = 1280, 1280
+            elif "Portrait" in ratio: width, height = 768, 1280
+            elif "Landscape" in ratio: width, height = 1280, 768
+            
+        with c3:
+            style = st.selectbox("Artistic Style", ["Realistic", "Anime", "Cyberpunk", "Oil Painting", "3D Render", "Dark Fantasy", "None"])
 
-    # Prompt Row
+    # PROMPT ENGINE
+    st.markdown("<br>", unsafe_allow_html=True)
     col_input, col_btn = st.columns([4, 1])
     with col_input:
-        st.session_state.create_prompt = st.text_input("Vision", value=st.session_state.create_prompt, placeholder="A futuristic city made of glass...", label_visibility="collapsed")
+        st.session_state.create_prompt = st.text_input("Creative Vision", value=st.session_state.create_prompt, placeholder="A futuristic city made of gold and glass...", label_visibility="collapsed")
     with col_btn:
-        if st.button("✨ AI Expand", use_container_width=True):
-            with st.spinner("Thinking..."):
+        if st.button("✨ Enhance", use_container_width=True, help="Use AI to improve your prompt"):
+            with st.spinner("Injecting Creativity..."):
                 st.session_state.create_prompt = expand_prompt_with_ai(st.session_state.create_prompt, groq_key)
                 st.rerun()
 
-    if st.button("🚀 IGNITE (GENERATE)", type="primary", use_container_width=True):
-        if st.session_state.create_prompt:
-            # 1. BUILD PROMPT
+    # GENERATION BUTTON
+    st.write("")
+    if st.button("🚀 IGNITE GENERATION", type="primary", use_container_width=True):
+        if not st.session_state.create_prompt:
+            st.warning("⚠️ Please enter a prompt first.")
+        else:
+            # 1. Prompt Engineering
             final_prompt = st.session_state.create_prompt
-            # We keep '8k' in the prompt text for detail, even if actual pixel count is Safe HD
-            final_prompt += ", 8k resolution, highly detailed, masterpiece"
+            # We force '8k' keyword for texture, even if actual resolution is 1280p
+            final_prompt += ", 8k resolution, photorealistic, masterpiece, sharp focus, highly detailed"
             if style != "None":
                 final_prompt += f", {style} style"
             
-            seed = random.randint(0, 99999)
+            seed = random.randint(0, 999999)
             image_url = f"https://image.pollinations.ai/prompt/{final_prompt}?width={width}&height={height}&seed={seed}&nologo=true&model={model_api}"
             
-            # 2. FETCH & DISPLAY
-            with st.status("🎨 Rendering High-Res Image...", expanded=True) as status:
-                st.write("✨ Contacting render engine (Attempt 1)...")
+            # 2. Execution
+            with st.status("Processing Request...", expanded=True) as status:
+                st.write("📡 Connecting to Neural Cloud...")
                 img_data = get_image_bytes(image_url)
                 
                 if img_data:
-                    status.update(label="✅ Complete!", state="complete", expanded=False)
+                    status.update(label="✅ Render Complete", state="complete", expanded=False)
                     st.image(img_data, caption=f"Generated Result (Seed: {seed})", use_container_width=True)
                     
-                    # 3. DOWNLOAD BUTTON
                     st.download_button(
-                        label="⬇️ DOWNLOAD IMAGE",
+                        label="⬇️ DOWNLOAD HD ASSET",
                         data=img_data,
                         file_name=f"akriti_{seed}.jpg",
                         mime="image/jpeg",
                         use_container_width=True
                     )
                 else:
-                    status.update(label="❌ Server Busy", state="error")
-                    st.error("Server is under heavy load. Please wait 10 seconds and try again, or switch to 'Turbo'.")
+                    status.update(label="❌ Network Timeout", state="error")
+                    st.error("The server is currently overloaded. Please wait 10 seconds and try again.")
+                    st.caption(f"Debug URL (Click to view in browser): [Link]({image_url})")
 
-# --- TAB 2: REMIX ---
+# --- TAB 2: REMIX ENGINE ---
 with tab2:
     st.markdown("<br>", unsafe_allow_html=True)
     c_img, c_ctrl = st.columns(2)
     
     with c_img:
-        uploaded = st.file_uploader("Upload Base", type=["jpg", "png"])
+        uploaded = st.file_uploader("Upload Source Image", type=["jpg", "png", "jpeg"])
         if uploaded:
-            st.image(uploaded, caption="Original", use_container_width=True)
+            st.image(uploaded, caption="Source", use_container_width=True)
             
     with c_ctrl:
-        st.session_state.remix_prompt = st.text_input("Transformation", value=st.session_state.remix_prompt, placeholder="Make it look like a sketch...")
+        st.session_state.remix_prompt = st.text_input("Transformation Command", value=st.session_state.remix_prompt, placeholder="Example: Make it look like a pencil sketch")
         
-        if st.button("🌪️ REMIX NOW", type="primary", use_container_width=True):
+        st.write("")
+        if st.button("🌪️ ACTIVATE REMIX", type="primary", use_container_width=True):
             if uploaded and st.session_state.remix_prompt:
-                with st.status("Processing Remix...", expanded=True) as status:
-                    st.write("📤 Uploading base image...")
+                with st.status("Remixing Reality...", expanded=True) as status:
+                    st.write("📤 Uploading source matrix...")
                     base_url = upload_to_pollinations(uploaded)
                     
                     if base_url:
-                        st.write("🎨 Applying Transformation...")
-                        seed = random.randint(0, 99999)
+                        st.write("🎨 Applying neural style transfer...")
+                        seed = random.randint(0, 999999)
                         # Remix safe resolution
-                        remix_url = f"https://image.pollinations.ai/prompt/{st.session_state.remix_prompt}?image={base_url}&seed={seed}&nologo=true&model=flux&width=1280&height=768"
+                        remix_url = f"https://image.pollinations.ai/prompt/{st.session_state.remix_prompt}?image={base_url}&seed={seed}&nologo=true&model=flux&width=1280&height=1280"
                         
                         img_data = get_image_bytes(remix_url)
                         
                         if img_data:
-                            status.update(label="✅ Remix Complete!", state="complete", expanded=False)
-                            st.image(img_data, caption="Remixed Result", use_container_width=True)
+                            status.update(label="✅ Remix Complete", state="complete", expanded=False)
+                            st.image(img_data, caption="Remix Result", use_container_width=True)
                             st.download_button("⬇️ DOWNLOAD REMIX", data=img_data, file_name=f"remix_{seed}.jpg", mime="image/jpeg", use_container_width=True)
                         else:
-                            st.error("Remix failed. Server busy.")
+                            st.error("Remix failed. The prompt might be too complex for the current server load.")
                     else:
-                        st.error("Upload failed.")
+                        st.error("Failed to upload source image.")
 
 # FOOTER
 st.markdown("""
