@@ -15,7 +15,7 @@ except ImportError as e:
 # 2. APP CONFIGURATION & STYLING
 # ==========================================
 st.set_page_config(
-    page_title="AKRITI OMEGA",
+    page_title="AKRITI ",
     page_icon="👑",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -180,7 +180,7 @@ if 'create_prompt' not in st.session_state: st.session_state.create_prompt = ""
 if 'remix_prompt' not in st.session_state: st.session_state.remix_prompt = ""
 groq_key = get_groq_key()
 
-st.title("👑 AKRITI OMEGA")
+st.title(" AKRITI ")
 st.caption("Samrion Intelligence | Visual Engine v4.0")
 
 # Tabs
